@@ -61,5 +61,7 @@ Desktop.ini
 *.swp
 *.swo
 
-# Cursor
-.cursor/
+# sensitive information
+src/main/resources/application.properties
+src/main/resources/application-dev.properties
+src/main/resources/application-dev.yml
