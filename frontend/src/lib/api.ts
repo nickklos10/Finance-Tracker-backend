@@ -10,24 +10,27 @@ async function handleResponse(res: Response) {
     return res.status === 204 ? null : res.json();
 }
 
-export function getCurrentUser(): Promise<User> {
-    return fetch(`${API_URL}/api/users/me`, {
+export async function getCurrentUser(): Promise<User> {
+    const res = await fetch(`${API_URL}/api/users/me`, {
         credentials: 'include',
-    }).then(handleResponse);
+    });
+    return handleResponse(res);
 }
 
-export function updateCurrentUser(data: { name: string; email: string }): Promise<User> {
-    return fetch(`${API_URL}/api/users/me`, {
+export async function updateCurrentUser(data: { name: string; email: string }): Promise<User> {
+    const res = await fetch(`${API_URL}/api/users/me`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {'Content-Type': 'application/json'},
         credentials: 'include',
         body: JSON.stringify(data),
-    }).then(handleResponse);
+    });
+    return handleResponse(res);
 }
 
-export function deleteCurrentUser(): Promise<void> {
-    return fetch(`${API_URL}/api/users/me`, {
+export async function deleteCurrentUser(): Promise<void> {
+    const res = await fetch(`${API_URL}/api/users/me`, {
         method: 'DELETE',
         credentials: 'include',
-    }).then(handleResponse);
+    });
+    return handleResponse(res);
 }
