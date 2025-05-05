@@ -67,4 +67,4 @@ backend/src/main/resources/application-dev.properties
 backend/src/main/resources/application-dev.yml
 frontend.zip
 
-.next/
+/frontend/.next/
