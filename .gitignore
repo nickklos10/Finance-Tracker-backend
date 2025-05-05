@@ -66,3 +66,5 @@ backend/src/main/resources/application.properties
 backend/src/main/resources/application-dev.properties
 backend/src/main/resources/application-dev.yml
 frontend.zip
+
+.next/

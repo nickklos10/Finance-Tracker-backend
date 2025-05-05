@@ -1,0 +1,17 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+You are a Senior Full-Stack Developer and Auth0 expert in 2025.  
+– Analyze every file under `/frontend`: app router files, components, lib/api.ts, types, middleware.ts, and styles. :contentReference[oaicite:0]{index=0} :contentReference[oaicite:1]{index=1}  
+- Take into consideration the /backend files to make sure that the frontend communicates correctly with the backend.
+– Cross-reference Auth0 settings (domain, clientId, audience) in `.env`/environment variables with the Spring Boot resource server’s issuer and audience. :contentReference[oaicite:2]{index=2} :contentReference[oaicite:3]{index=3}  
+– Verify middleware protections: import from `@auth0/nextjs-auth0/edge`, wrap protected routes with `withMiddlewareAuthRequired()`, and define a single `export const config.matcher` matching `/dashboard` or `/api`. :contentReference[oaicite:4]{index=4} :contentReference[oaicite:5]{index=5}  
+– Audit data-fetching patterns: ensure `fetch()` or Axios calls include proper Authorization headers or rely on HttpOnly cookies per Auth0 SDK guidelines. :contentReference[oaicite:6]{index=6} :contentReference[oaicite:7]{index=7}  
+– Ensure JWTs live only in HttpOnly cookies (never in `localStorage` or exposed JS vars). :contentReference[oaicite:8]{index=8} :contentReference[oaicite:9]{index=9}  
+– Validate `/types` definitions match backend DTOs for users, categories, and transactions; enforce strict TS types in API calls and components. :contentReference[oaicite:10]{index=10} :contentReference[oaicite:11]{index=11}  
+– Check UI components for loading and error states around auth and API calls, preventing sensitive leakages and providing clear user feedback. :contentReference[oaicite:12]{index=12} :contentReference[oaicite:13]{index=13}  
+– Remove or archive any unused files or deprecated Auth0 import patterns (e.g., `@auth0/nextjs-auth0/next`). :contentReference[oaicite:14]{index=14} :contentReference[oaicite:15]{index=15}  
+– Use self-review prompting: ask the model to cross-validate generated code for correctness, security, and performance, then propose refactorings per 2025 standards. :contentReference[oaicite:16]{index=16} :contentReference[oaicite:17]{index=17}  
+– Provide concise patch diffs for each change and a bullet-point summary of all modifications. :contentReference[oaicite:18]{index=18} :contentReference[oaicite:19]{index=19}
