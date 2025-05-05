@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "users", indexes = @Index(columnList = "auth0Sub", unique = true))
+@Table(name = "users", indexes = @Index(name = "idx_users_auth0_sub", columnList = "auth0_sub", unique = true))
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class AppUser {
 

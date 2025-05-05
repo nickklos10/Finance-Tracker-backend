@@ -7,12 +7,12 @@ CREATE TABLE IF NOT EXISTS categories (
 
 CREATE TABLE IF NOT EXISTS transactions (
     id          BIGSERIAL PRIMARY KEY,
-    description TEXT        NOT NULL,
-    amount      NUMERIC(19,2) NOT NULL,
-    date        TIMESTAMP    NOT NULL,
-    type        TEXT         NOT NULL,
+    description TEXT           NOT NULL,
+    amount      NUMERIC(12,2)  NOT NULL,
+    date        TIMESTAMP      NOT NULL,
+    type        TEXT           NOT NULL,
     notes       TEXT,
-    category_id BIGINT REFERENCES categories(id)
+    category_id BIGINT         NOT NULL REFERENCES categories(id)
     );
 
 -- Helpful indexes

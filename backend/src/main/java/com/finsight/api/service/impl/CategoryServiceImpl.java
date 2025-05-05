@@ -9,20 +9,26 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 @Service
 @RequiredArgsConstructor                                    // Lombok ctor :contentReference[oaicite:3]{index=3}
+@CacheConfig(cacheNames = "categories")
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepo;
 
     @Override
+    @Cacheable
     public Page<CategoryDTO> getAllCategories(Pageable pageable) {
         return categoryRepo.findAll(pageable)               // built-in paging :contentReference[oaicite:4]{index=4}
                 .map(this::toDto);
     }
 
     @Override
+    @Cacheable(key = "#id")
     public CategoryDTO getCategoryById(Long id) {
         Category cat = categoryRepo.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Category not found: " + id));
@@ -30,6 +36,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Cacheable(key = "#name")
     public CategoryDTO getCategoryByName(String name) {
         return categoryRepo.findByName(name)
                 .map(this::toDto)
@@ -37,6 +44,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @CacheEvict(allEntries = true)
     public CategoryDTO createCategory(CategoryDTO dto) {
         if (categoryRepo.existsByName(dto.getName())) {     // cheap exists-check :contentReference[oaicite:5]{index=5}
             throw new IllegalArgumentException("Category '" + dto.getName() + "' already exists");
@@ -45,6 +53,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @CacheEvict(allEntries = true)
     public CategoryDTO updateCategory(Long id, CategoryDTO dto) {
         if (!categoryRepo.existsById(id)) {
             throw new EntityNotFoundException("Category not found: " + id);
@@ -54,6 +63,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @CacheEvict(allEntries = true)
     public void deleteCategory(Long id) {
         if (!categoryRepo.existsById(id)) {
             throw new EntityNotFoundException("Category not found: " + id);

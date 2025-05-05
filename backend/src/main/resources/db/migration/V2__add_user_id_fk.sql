@@ -32,3 +32,19 @@ WHERE user_id IS NULL;
 UPDATE categories
 SET user_id = (SELECT id FROM users WHERE auth0_sub = 'dev|seed')
 WHERE user_id IS NULL;
+
+-- 5) Add name and email columns to the users table
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS name  VARCHAR(100);
+
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS email VARCHAR(100);
+
+UPDATE users
+SET name  = 'Demo User',
+    email = 'demo@example.com'
+WHERE auth0_sub = 'dev|seed';
+
+-- 6) Add indexes on user_id for performance
+CREATE INDEX IF NOT EXISTS idx_transactions_user ON transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_categories_user ON categories(user_id);
