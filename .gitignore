@@ -68,3 +68,8 @@ backend/src/main/resources/application-dev.yml
 frontend.zip
 
 /frontend/.next/
+
+
+#Cursor
+
+backend/.cursor
