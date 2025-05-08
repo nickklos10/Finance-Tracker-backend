@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -25,6 +24,8 @@ public class TransactionController {
 
     private final TransactionService txService;
 
+    /* ---------- READ ENDPOINTs ---------- */
+
     @GetMapping
     public ResponseEntity<Page<TransactionDTO>> getAll(Pageable pageable) {
         return ResponseEntity.ok(txService.getAllTransactions(pageable));
@@ -33,25 +34,6 @@ public class TransactionController {
     @GetMapping("/{id}")
     public ResponseEntity<TransactionDTO> getById(@PathVariable Long id) {
         return ResponseEntity.ok(txService.getTransactionById(id));
-    }
-
-    @PostMapping
-    public ResponseEntity<TransactionDTO> create(@Valid @RequestBody TransactionDTO dto) {
-        TransactionDTO saved = txService.createTransaction(dto);
-        URI location = URI.create("/api/transactions/" + saved.getId());             // << getId()
-        return ResponseEntity.created(location).body(saved);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<TransactionDTO> update(@PathVariable Long id,
-                                                 @Valid @RequestBody TransactionDTO dto) {
-        return ResponseEntity.ok(txService.updateTransaction(id, dto));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        txService.deleteTransaction(id);
-        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/type/{type}")
@@ -74,4 +56,24 @@ public class TransactionController {
         return ResponseEntity.ok(txService.getTransactionsByCategory(categoryId, pageable));
     }
 
+    /* ---------- WRITE ENDPOINTS ---------- */
+
+    @PostMapping
+    public ResponseEntity<TransactionDTO> create(@Valid @RequestBody TransactionDTO dto) {
+        TransactionDTO saved = txService.createTransaction(dto);
+        URI location = URI.create("/api/transactions/" + saved.getId());
+        return ResponseEntity.created(location).body(saved);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<TransactionDTO> update(@PathVariable Long id,
+                                                 @Valid @RequestBody TransactionDTO dto) {
+        return ResponseEntity.ok(txService.updateTransaction(id, dto));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        txService.deleteTransaction(id);
+        return ResponseEntity.noContent().build();
+    }
 }
