@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 200 requests / 5 minutes per remote IP.
- * Uses only bucket4j‑core (8.10+), no deprecated APIs.
+ * Uses only bucket4j‑core
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)   // ensure it runs before Spring‑Security

@@ -30,11 +30,11 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain api(HttpSecurity http) throws Exception {
 
-        /* 1) Build a JwtAuthenticationConverter that uses our scope converter */
-        JwtAuthenticationConverter jwtAuthConverter = new JwtAuthenticationConverter();
-        jwtAuthConverter.setJwtGrantedAuthoritiesConverter(JwtToScopeConverter.INSTANCE);
+        /* Build a JwtAuthenticationConverter that pulls authorities from the
+           space‑delimited “scope” claim. */
+        JwtAuthenticationConverter jwtAuthConv = new JwtAuthenticationConverter();
+        jwtAuthConv.setJwtGrantedAuthoritiesConverter(JwtToScopeConverter.INSTANCE);
 
-        /* 2) Configure the filter chain */
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(req -> {
@@ -47,28 +47,46 @@ public class SecurityConfig {
                 }))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        /* actuator health stays public */
                         .requestMatchers("/actuator/health").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()     // pre‑flight
-                        .requestMatchers("/api/**").hasAuthority("SCOPE_fin:app")
+                        /* pre‑flight */
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        /* all API + other actuator endpoints need scope */
+                        .requestMatchers("/api/**", "/actuator/**").hasAuthority("SCOPE_fin:app")
                         .anyRequest().denyAll())
+                .headers(headers -> headers
+                        /* Content‑Security‑Policy: scripts & styles only from same origin */
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives("default-src 'self'; " +
+                                        "script-src  'self'; " +
+                                        "style-src   'self'"))
+                        /* Strict‑Transport‑Security: one year, include sub‑domains, preload */
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .preload(true)
+                                .maxAgeInSeconds(31_536_000))    // 365 days
+                        /* Referrer‑Policy: never send referrer header */
+                        .referrerPolicy(rp -> rp.policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER)))
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(jwt -> jwt
-                                .decoder(jwtDecoder())               // strict claim checks
-                                .jwtAuthenticationConverter(jwtAuthConverter)));  // ✓ no cast
+                                .decoder(jwtDecoder())
+                                .jwtAuthenticationConverter(jwtAuthConv)));
+
         return http.build();
     }
 
-    /** Validates iss, exp/nbf, aud *and* azp */
+    /** Validates iss, exp/nbf, aud *and* azp (authorised party) */
     @Bean
     JwtDecoder jwtDecoder() {
+
         NimbusJwtDecoder decoder =
                 (NimbusJwtDecoder) JwtDecoders.fromOidcIssuerLocation(ISSUER_URI);
 
         OAuth2TokenValidator<Jwt> aud = new JwtClaimValidator<List<String>>(
-                "aud", list -> list.contains(AUDIENCE));
+                "aud", list -> list.contains(AUDIENCE));                       // :contentReference[oaicite:0]{index=0}
 
         OAuth2TokenValidator<Jwt> azp = new JwtClaimValidator<>(
-                "azp", Predicate.isEqual(AUDIENCE));
+                "azp", Predicate.isEqual(AUDIENCE));                           // :contentReference[oaicite:1]{index=1}
 
         OAuth2TokenValidator<Jwt> issuer = JwtValidators.createDefaultWithIssuer(ISSUER_URI);
 
