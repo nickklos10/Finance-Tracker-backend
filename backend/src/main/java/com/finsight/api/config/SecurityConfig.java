@@ -51,7 +51,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health").permitAll()
                         /* pre‑flight */
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        /* all API + other actuator endpoints need scope */
+                        /* all API + another actuator endpoints need scope */
                         .requestMatchers("/api/**", "/actuator/**").hasAuthority("SCOPE_fin:app")
                         .anyRequest().denyAll())
                 .headers(headers -> headers
@@ -78,19 +78,17 @@ public class SecurityConfig {
     /** Validates iss, exp/nbf, aud *and* azp (authorised party) */
     @Bean
     JwtDecoder jwtDecoder() {
-
         NimbusJwtDecoder decoder =
                 (NimbusJwtDecoder) JwtDecoders.fromOidcIssuerLocation(ISSUER_URI);
 
         OAuth2TokenValidator<Jwt> aud = new JwtClaimValidator<List<String>>(
-                "aud", list -> list.contains(AUDIENCE));                       // :contentReference[oaicite:0]{index=0}
+                "aud", list -> list.contains(AUDIENCE));
 
-        OAuth2TokenValidator<Jwt> azp = new JwtClaimValidator<>(
-                "azp", Predicate.isEqual(AUDIENCE));                           // :contentReference[oaicite:1]{index=1}
+        OAuth2TokenValidator<Jwt> issuer =
+                JwtValidators.createDefaultWithIssuer(ISSUER_URI);
 
-        OAuth2TokenValidator<Jwt> issuer = JwtValidators.createDefaultWithIssuer(ISSUER_URI);
-
-        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(issuer, aud, azp));
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(issuer, aud));
         return decoder;
     }
+
 }
