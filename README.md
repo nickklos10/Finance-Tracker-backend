@@ -4,6 +4,11 @@
 
 The Finance Tracker API is a Spring Boot application that provides a secure and scalable RESTful interface for managing personal finance data. It supports CRUD operations for transactions and categories, user profile management, and integrates with Auth0 for authentication and authorization.
 
+## App Architecture
+
+<img width="1119" alt="Screenshot 2025-05-30 at 7 37 54 PM" src="https://github.com/user-attachments/assets/968cf606-5277-4aab-9aa4-3dfab173af16" />
+
+
 ## Table of Contents
 
 - [Features](#features)
