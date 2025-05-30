@@ -61,15 +61,15 @@ Desktop.ini
 *.swp
 *.swo
 
-# sensitive information
+# Sensitive information - Configuration files with credentials
 backend/src/main/resources/application.properties
-backend/src/main/resources/application-dev.properties
-backend/src/main/resources/application-dev.yml
-frontend.zip
+backend/src/main/resources/application-*.properties
+backend/src/main/resources/application-*.yml
+backend/src/test/resources/application-test.properties
 
-/frontend/.next/
+# Cursor IDE files
+backend/.cursor/
+.cursor/
 
-
-#Cursor
-
-backend/.cursor
+# Development scripts (optional - you can remove this if you want to track run-dev.sh)
+backend/run-dev.sh
