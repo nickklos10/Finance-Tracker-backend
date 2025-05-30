@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springdoc.core.annotations.ParameterObject;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -43,7 +44,7 @@ public class TransactionController {
         @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
     })
     public ResponseEntity<Page<TransactionDTO>> getAll(
-            @Parameter(description = "Pagination parameters") Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(txService.getAllTransactions(pageable));
     }
 
@@ -65,7 +66,7 @@ public class TransactionController {
     public ResponseEntity<Page<TransactionDTO>> byType(
             @Parameter(description = "Transaction type", required = true, schema = @Schema(implementation = TransactionType.class)) 
             @PathVariable TransactionType type,
-            @Parameter(description = "Pagination parameters") Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(txService.getTransactionsByType(type, pageable));
     }
 

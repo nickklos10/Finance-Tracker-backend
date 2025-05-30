@@ -69,11 +69,19 @@ public class TransactionServiceImpl implements TransactionService {
                 .filter(tx -> tx.getUser().equals(user))
                 .orElseThrow(() -> new EntityNotFoundException("Transaction not found: " + id));
         
-        // Update the transaction
-        dto.setId(id);
-        Transaction updatedTx = toEntity(dto);
-        updatedTx.setUser(user);
-        return toDto(txRepo.save(updatedTx));
+        existingTx.setDescription(dto.getDescription());
+        existingTx.setAmount(dto.getAmount());
+        existingTx.setDate(dto.getDate());
+        existingTx.setType(dto.getType());
+        existingTx.setNotes(dto.getNotes());
+
+        if (dto.getCategoryId() != null) {
+            Category cat = catRepo.findById(dto.getCategoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Category not found: " + dto.getCategoryId()));
+            existingTx.setCategory(cat);
+        }
+
+        return toDto(txRepo.save(existingTx));
     }
 
     @Override

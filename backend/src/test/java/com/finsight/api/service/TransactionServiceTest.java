@@ -12,6 +12,7 @@ import com.finsight.api.service.impl.TransactionServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -29,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -99,17 +101,35 @@ class TransactionServiceTest {
         dto.setType(TransactionType.INCOME);
         dto.setCategoryId(1L);
 
+        // Create a transaction with the DTO values for the mock to return
+        Transaction savedTransaction = new Transaction(
+                1L,
+                "New Transaction", // Use DTO description
+                BigDecimal.valueOf(50.00),
+                dto.getDate(),
+                TransactionType.INCOME,
+                testCategory,
+                null,
+                testUser
+        );
+
         when(currentUser.getSub()).thenReturn("auth0|test123");
         when(userRepo.findByAuth0Sub("auth0|test123")).thenReturn(Optional.of(testUser));
         when(catRepo.findById(1L)).thenReturn(Optional.of(testCategory));
-        when(txRepo.save(any(Transaction.class))).thenReturn(testTransaction);
+        when(txRepo.save(any(Transaction.class))).thenReturn(savedTransaction);
 
         // When
         TransactionDTO result = transactionService.createTransaction(dto);
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.getDescription()).isEqualTo("Test Transaction");
+        // Assert that the value coming from the DTO is persisted
+        assertThat(result.getDescription()).isEqualTo("New Transaction");
+
+        // Optionally capture the argument passed to save() and verify it carries the DTO values
+        ArgumentCaptor<Transaction> captor = ArgumentCaptor.forClass(Transaction.class);
+        verify(txRepo).save(captor.capture());
+        assertThat(captor.getValue().getDescription()).isEqualTo("New Transaction");
     }
 
     @Test

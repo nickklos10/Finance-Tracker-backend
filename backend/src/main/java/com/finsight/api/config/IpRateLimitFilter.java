@@ -2,6 +2,7 @@ package com.finsight.api.config;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import lombok.RequiredArgsConstructor;
@@ -22,12 +23,23 @@ import java.util.concurrent.ConcurrentHashMap;
  * Default: 200 requests / 5 minutes per remote IP.
  */
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE)   // ensure it runs before Spring‑Security
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @RequiredArgsConstructor
 public class IpRateLimitFilter extends OncePerRequestFilter {
 
     private final AppProperties appProperties;
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+    private volatile Bandwidth cachedBandwidth;
+
+    @PostConstruct
+    private void initializeBandwidth() {
+        int requestsPerWindow = appProperties.getRateLimit().getRequestsPerWindow();
+        int windowMinutes = appProperties.getRateLimit().getWindowMinutes();
+        this.cachedBandwidth = Bandwidth.builder()
+                .capacity(requestsPerWindow)
+                .refillGreedy(requestsPerWindow, Duration.ofMinutes(windowMinutes))
+                .build();
+    }
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest req,
@@ -35,22 +47,15 @@ public class IpRateLimitFilter extends OncePerRequestFilter {
                                     @NonNull FilterChain chain)
             throws ServletException, IOException {
 
-        // Get rate limit configuration
-        int requestsPerWindow = appProperties.getRateLimit().getRequestsPerWindow();
-        int windowMinutes = appProperties.getRateLimit().getWindowMinutes();
-        
-        Bandwidth limit = Bandwidth.builder()
-                .capacity(requestsPerWindow)
-                .refillGreedy(requestsPerWindow, Duration.ofMinutes(windowMinutes))
-                .build();
-
         Bucket bucket = buckets.computeIfAbsent(
                 req.getRemoteAddr(),
-                ip -> Bucket.builder().addLimit(limit).build());
-
+               ip -> Bucket.builder().addLimit(cachedBandwidth).build());
         if (bucket.tryConsume(1)) {
             chain.doFilter(req, res);
         } else {
+            int requestsPerWindow = appProperties.getRateLimit().getRequestsPerWindow();
+            int windowMinutes = appProperties.getRateLimit().getWindowMinutes();
+            
             res.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             res.setContentType("application/json");
             res.getWriter().write(String.format("""

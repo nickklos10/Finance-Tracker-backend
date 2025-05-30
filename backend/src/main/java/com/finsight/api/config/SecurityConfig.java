@@ -20,7 +20,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableMethodSecurity(jsr250Enabled = true)
@@ -42,8 +42,13 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(req -> {
                     CorsConfiguration cfg = new CorsConfiguration();
                     // Parse allowed origins from configuration
-                    String[] origins = appProperties.getCors().getAllowedOrigins().split(",");
-                    cfg.setAllowedOrigins(Arrays.asList(origins));
+                    String[] origins = appProperties.getCors().getAllowedOrigins()
+                            .split(",");
+                    List<String> allowedOrigins = Arrays.stream(origins)
+                            .map(String::trim)
+                            .filter(origin -> !origin.isEmpty())
+                            .collect(Collectors.toList());
+                    cfg.setAllowedOrigins(allowedOrigins);
                     cfg.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
                     cfg.setAllowedHeaders(List.of("Authorization","Content-Type"));
                     cfg.setAllowCredentials(true);
