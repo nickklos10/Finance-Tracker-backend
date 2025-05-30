@@ -105,7 +105,7 @@ class CategoryServiceTest {
     @Test
     void updateCategory_WhenExists_ShouldReturnUpdatedCategory() {
         // Given
-        when(categoryRepository.existsById(1L)).thenReturn(true);
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
         when(categoryRepository.save(any(Category.class))).thenReturn(sampleCategory);
 
         // When
@@ -117,14 +117,14 @@ class CategoryServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-        verify(categoryRepository).existsById(1L);
+        verify(categoryRepository).findById(1L);
         verify(categoryRepository).save(any(Category.class));
     }
 
     @Test
     void updateCategory_WhenNotExists_ShouldThrowException() {
         // Given
-        when(categoryRepository.existsById(anyLong())).thenReturn(false);
+        when(categoryRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         // When/Then
         CategoryDTO updateDTO = new CategoryDTO();
@@ -137,20 +137,20 @@ class CategoryServiceTest {
     @Test
     void deleteCategory_WhenExists_ShouldDeleteSuccessfully() {
         // Given
-        when(categoryRepository.existsById(1L)).thenReturn(true);
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
 
         // When
         categoryService.deleteCategory(1L);
 
         // Then
-        verify(categoryRepository).existsById(1L);
+        verify(categoryRepository).findById(1L);
         verify(categoryRepository).deleteById(1L);
     }
 
     @Test
     void deleteCategory_WhenNotExists_ShouldThrowException() {
         // Given
-        when(categoryRepository.existsById(anyLong())).thenReturn(false);
+        when(categoryRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         // When/Then
         assertThatThrownBy(() -> categoryService.deleteCategory(999L))
