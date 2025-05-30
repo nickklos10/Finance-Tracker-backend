@@ -1,6 +1,7 @@
 package com.finsight.api.config;
 
 import com.finsight.api.security.JwtToScopeConverter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -17,21 +18,22 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
 @Configuration
 @EnableMethodSecurity(jsr250Enabled = true)
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    private static final String ISSUER_URI = "https://dev-ugadnr0ui0vziqee.us.auth0.com/";
-    private static final String AUDIENCE   = "https://finsight-api";
+    private final AppProperties appProperties;
 
     @Bean
     SecurityFilterChain api(HttpSecurity http) throws Exception {
 
         /* Build a JwtAuthenticationConverter that pulls authorities from the
-           space‑delimited “scope” claim. */
+           space‑delimited "scope" claim. */
         JwtAuthenticationConverter jwtAuthConv = new JwtAuthenticationConverter();
         jwtAuthConv.setJwtGrantedAuthoritiesConverter(JwtToScopeConverter.INSTANCE);
 
@@ -39,9 +41,12 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(req -> {
                     CorsConfiguration cfg = new CorsConfiguration();
-                    cfg.setAllowedOrigins(List.of("https://app.finsight.com"));
+                    // Parse allowed origins from configuration
+                    String[] origins = appProperties.getCors().getAllowedOrigins().split(",");
+                    cfg.setAllowedOrigins(Arrays.asList(origins));
                     cfg.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
                     cfg.setAllowedHeaders(List.of("Authorization","Content-Type"));
+                    cfg.setAllowCredentials(true);
                     cfg.setMaxAge(Duration.ofHours(1));
                     return cfg;
                 }))
@@ -78,14 +83,17 @@ public class SecurityConfig {
     /** Validates iss, exp/nbf, aud *and* azp (authorised party) */
     @Bean
     JwtDecoder jwtDecoder() {
+        String issuerUri = appProperties.getAuth0().getIssuerUri();
+        String audience = appProperties.getAuth0().getAudience();
+        
         NimbusJwtDecoder decoder =
-                (NimbusJwtDecoder) JwtDecoders.fromOidcIssuerLocation(ISSUER_URI);
+                (NimbusJwtDecoder) JwtDecoders.fromOidcIssuerLocation(issuerUri);
 
         OAuth2TokenValidator<Jwt> aud = new JwtClaimValidator<List<String>>(
-                "aud", list -> list.contains(AUDIENCE));
+                "aud", list -> list.contains(audience));
 
         OAuth2TokenValidator<Jwt> issuer =
-                JwtValidators.createDefaultWithIssuer(ISSUER_URI);
+                JwtValidators.createDefaultWithIssuer(issuerUri);
 
         decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(issuer, aud));
         return decoder;

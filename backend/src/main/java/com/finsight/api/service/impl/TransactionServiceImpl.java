@@ -26,24 +26,28 @@ public class TransactionServiceImpl implements TransactionService {
     private final CurrentUserService    currentUser;
 
     /* -------------------------------------------------
-       READ METHODS – caller must own the data
+       READ METHODS – automatically scoped to current user
        ------------------------------------------------- */
 
     @Override
-    @PreAuthorize("hasAuthority('SCOPE_fin:app') and @ownership.checkTx(#pageable, principal)")
+    @PreAuthorize("hasAuthority('SCOPE_fin:app')")
     public Page<TransactionDTO> getAllTransactions(Pageable pageable) {
-        return txRepo.findAll(pageable).map(this::toDto);
+        AppUser user = findCurrentAppUser();
+        return txRepo.findByUser(user, pageable).map(this::toDto);
     }
 
     @Override
-    @PreAuthorize("hasAuthority('SCOPE_fin:app') and @ownership.checkTxId(#id, principal)")
+    @PreAuthorize("hasAuthority('SCOPE_fin:app')")
     public TransactionDTO getTransactionById(Long id) {
-        return txRepo.findById(id).map(this::toDto)
+        AppUser user = findCurrentAppUser();
+        return txRepo.findById(id)
+                .filter(tx -> tx.getUser().equals(user))
+                .map(this::toDto)
                 .orElseThrow(() -> new EntityNotFoundException("Transaction not found: " + id));
     }
 
     /* -------------------------------------------------
-       WRITE METHODS – caller must own the data
+       WRITE METHODS – automatically scoped to current user
        ------------------------------------------------- */
 
     @Override
@@ -56,41 +60,59 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    @PreAuthorize("hasAuthority('SCOPE_fin:app') and @ownership.checkTxId(#id, principal)")
+    @PreAuthorize("hasAuthority('SCOPE_fin:app')")
     public TransactionDTO updateTransaction(Long id, TransactionDTO dto) {
+        AppUser user = findCurrentAppUser();
+        
+        // Verify the transaction belongs to the current user
+        Transaction existingTx = txRepo.findById(id)
+                .filter(tx -> tx.getUser().equals(user))
+                .orElseThrow(() -> new EntityNotFoundException("Transaction not found: " + id));
+        
+        // Update the transaction
         dto.setId(id);
-        Transaction tx = toEntity(dto);
-        tx.setUser(findCurrentAppUser());
-        return toDto(txRepo.save(tx));
+        Transaction updatedTx = toEntity(dto);
+        updatedTx.setUser(user);
+        return toDto(txRepo.save(updatedTx));
     }
 
     @Override
-    @PreAuthorize("hasAuthority('SCOPE_fin:app') and @ownership.checkTxId(#id, principal)")
+    @PreAuthorize("hasAuthority('SCOPE_fin:app')")
     public void deleteTransaction(Long id) {
-        txRepo.deleteById(id);
+        AppUser user = findCurrentAppUser();
+        
+        // Verify the transaction belongs to the current user before deleting
+        Transaction tx = txRepo.findById(id)
+                .filter(transaction -> transaction.getUser().equals(user))
+                .orElseThrow(() -> new EntityNotFoundException("Transaction not found: " + id));
+        
+        txRepo.delete(tx);
     }
 
     /* -------------------------------------------------
-       QUERY METHODS – always scoped to caller
+       QUERY METHODS – automatically scoped to current user
        ------------------------------------------------- */
 
     @Override
     @PreAuthorize("hasAuthority('SCOPE_fin:app')")
     public Page<TransactionDTO> getTransactionsByType(TransactionType type, Pageable pageable) {
-        return txRepo.findByType(type, pageable).map(this::toDto);
+        AppUser user = findCurrentAppUser();
+        return txRepo.findByUserAndType(user, type, pageable).map(this::toDto);
     }
 
     @Override
     @PreAuthorize("hasAuthority('SCOPE_fin:app')")
     public Page<TransactionDTO> getTransactionsByDateRange(LocalDateTime start, LocalDateTime end,
                                                            Pageable pageable) {
-        return txRepo.findByDateBetween(start, end, pageable).map(this::toDto);
+        AppUser user = findCurrentAppUser();
+        return txRepo.findByUserAndDateBetween(user, start, end, pageable).map(this::toDto);
     }
 
     @Override
-    @PreAuthorize("hasAuthority('SCOPE_fin:app') and @ownership.checkCategory(#categoryId, principal)")
+    @PreAuthorize("hasAuthority('SCOPE_fin:app')")
     public Page<TransactionDTO> getTransactionsByCategory(Long categoryId, Pageable pageable) {
-        return txRepo.findByCategoryId(categoryId, pageable).map(this::toDto);
+        AppUser user = findCurrentAppUser();
+        return txRepo.findByUserAndCategoryId(user, categoryId, pageable).map(this::toDto);
     }
 
     /* -------------------------------------------------

@@ -2,7 +2,6 @@ package com.finsight.api.security;
 
 import com.finsight.api.model.AppUser;
 import com.finsight.api.model.Category;
-import com.finsight.api.model.Transaction;
 import com.finsight.api.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -10,12 +9,13 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
 /**
- * Exposes simple boolean checks for SpEL expressions used in @PreAuthorize.
- *
- * All methods return true only if the current principal (Auth0 sub)
- * owns the entity being accessed.
+ * Exposes optimized boolean checks for SpEL expressions used in @PreAuthorize.
+ * 
+ * Note: With the updated service layer that automatically filters by user,
+ * these methods are now primarily used for backwards compatibility and
+ * additional security checks.
  */
-@Component("ownership")        // the bean name used in SpEL
+@Component("ownership")
 @RequiredArgsConstructor
 public class OwnershipEvaluator {
 
@@ -31,34 +31,60 @@ public class OwnershipEvaluator {
         return (p instanceof Jwt jwt) ? jwt.getSubject() : "";
     }
 
+    private AppUser findUserBySub(String sub) {
+        return userRepo.findByAuth0Sub(sub).orElse(null);
+    }
+
     /* -------------------------------------------------
-       SpEL‑called methods (must be public)
+       Optimized SpEL‑called methods (must be public)
        ------------------------------------------------- */
 
-    /** true if every Transaction in the page belongs to caller */
+    /** 
+     * Check if user has access to transaction operations
+     * Now simplified since service layer handles user filtering
+     */
     public boolean checkTx(org.springframework.data.domain.Pageable pageable,
                            Authentication auth) {
-
         String sub = principalSub(auth);
-        return txRepo.findAll(pageable).stream()
-                .allMatch(tx -> sub.equals(tx.getUser().getAuth0Sub()));
+        AppUser user = findUserBySub(sub);
+        return user != null; // User exists and can access their own data
     }
 
-    /** true if specific Transaction belongs to caller */
+    /** Check if specific Transaction belongs to caller using efficient query */
     public boolean checkTxId(Long txId, Authentication auth) {
         String sub = principalSub(auth);
-        return txRepo.findById(txId)
-                .map(Transaction::getUser)
-                .map(AppUser::getAuth0Sub)
-                .map(sub::equals)
-                .orElse(false);
+        AppUser user = findUserBySub(sub);
+        
+        if (user == null) {
+            return false;
+        }
+        
+        // Use efficient exists query instead of loading the entire entity
+        return txRepo.existsByIdAndUser(txId, user);
     }
 
-    /** true if Category belongs to caller (or is global) */
+    /** 
+     * Check if Category is accessible to caller
+     * Categories are currently global, but this prepares for user-specific categories
+     */
     public boolean checkCategory(Long categoryId, Authentication auth) {
         String sub = principalSub(auth);
-        // If categories are shared for now, just return true
-        Category cat = catRepo.findById(categoryId).orElse(null);
-        return cat != null; // adjust later when categories become per‑user
+        AppUser user = findUserBySub(sub);
+        
+        if (user == null) {
+            return false;
+        }
+        
+        // For now, categories are global - all authenticated users can access them
+        // This can be enhanced later for user-specific categories
+        return catRepo.existsById(categoryId);
+    }
+
+    /**
+     * Check if user can access their own profile
+     */
+    public boolean checkUserAccess(Authentication auth) {
+        String sub = principalSub(auth);
+        return findUserBySub(sub) != null;
     }
 }
