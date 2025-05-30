@@ -40,17 +40,4 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     /** Count transactions for user */
     long countByUser(AppUser user);
-
-    // Legacy methods - keep for backward compatibility but mark as deprecated
-    @Deprecated
-    @EntityGraph(attributePaths = {"category"})
-    Page<Transaction> findByType(TransactionType type, Pageable pageable);
-
-    @Deprecated
-    @EntityGraph(attributePaths = {"category"})
-    Page<Transaction> findByDateBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
-
-    @Deprecated
-    @EntityGraph(attributePaths = {"category"})
-    Page<Transaction> findByCategoryId(Long categoryId, Pageable pageable);
 }

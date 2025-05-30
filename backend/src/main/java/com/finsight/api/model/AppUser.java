@@ -15,10 +15,10 @@ public class AppUser {
     @Column(name = "auth0_sub", nullable = false, unique = true, length = 60)
     private String auth0Sub;
 
-    @Column(name = "name",  length = 100)
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "email", length = 100)
+    @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
 }
 

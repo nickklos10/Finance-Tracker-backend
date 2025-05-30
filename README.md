@@ -37,7 +37,7 @@ The Finance Tracker API is a Spring Boot application that provides a secure and 
 
 ## Technology Stack
 
-- Java 22
+- Java 21
 - Spring Boot 3.4.x
 - Spring Security OAuth2 Resource Server (JWT)
 - Spring Data JPA (Hibernate)
@@ -50,7 +50,7 @@ The Finance Tracker API is a Spring Boot application that provides a secure and 
 
 ## Prerequisites
 
-- Java 22 or higher
+- Java 21 or higher
 - Maven 3.8 or higher
 - Docker & Docker Compose
 
@@ -154,12 +154,12 @@ Authentication settings (issuer, audience) are currently hard-coded in `Security
 ### User Profile
 
 - `GET /api/users/me`  
-  Fetch the authenticated user’s profile.
+  Fetch the authenticated user's profile.
 - `PUT /api/users/me`  
-  Update the authenticated user’s profile.  
+  Update the authenticated user's profile.  
   Request body: `UserDTO`.
 - `DELETE /api/users/me`  
-  Delete the authenticated user’s account.
+  Delete the authenticated user's account.
 
 ## Data Model
 
